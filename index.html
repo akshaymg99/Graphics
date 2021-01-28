@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="x-ua-compatible" content="ie=edge" />
+	
+</head>
+
+<body></body>
+<script>
+	const canvas = document.createElement("canvas");
+	canvas.width = 500;
+	canvas.height = 500;
+
+	document.querySelector("body").appendChild(canvas);
+	const gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: true});
+	gl.viewport(0, 0, canvas.width, canvas.height);
+	if (!gl) throw new Error("WebGL is not supported");
+	
+	gl.clearColor(1.0, 1.0, 1.0, 1.0);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	let systemMode = 0;
+	let shapeMode = 0;
+
+	function mouseToClipCoord(mouseX, mouseY) {
+		mouseX = mouseX / canvas.width;
+		mouseY = mouseY / canvas.height;
+		mouseX = mouseX * 2;
+		mouseY = mouseY * 2;
+		mouseX = mouseX - 1;
+		mouseY = mouseY - 1;
+		mouseY = -mouseY; 
+		return [mouseX, mouseY];
+	}
+
+	function drawrectangle(cord) {
+
+		const vertexShaderSrc = `      
+        attribute vec3 aPosition;  
+        void main () {             
+          gl_Position = vec4(aPosition, 1.0); 
+          gl_PointSize = 5.0;     
+	     }                          
+		`;
+		const fragmentShaderSrc = `      
+	        precision mediump float;          
+	        void main () {               
+	          gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); 
+	        }                            
+	      `;
+
+    	const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+		gl.shaderSource(vertexShader, vertexShaderSrc);
+		gl.compileShader(vertexShader);
+		const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+		gl.shaderSource(fragmentShader, fragmentShaderSrc);
+		gl.compileShader(fragmentShader);
+		const shaderProgram = gl.createProgram();
+		gl.attachShader(shaderProgram, vertexShader);
+		gl.attachShader(shaderProgram, fragmentShader);
+		gl.linkProgram(shaderProgram);
+		gl.useProgram(shaderProgram);
+		let mx = cord[0];
+		let my = cord[1];
+		console.log("Coordinate x: " + mx,  "Coordinate y: " + my);
+		const vertexData = new Float32Array([
+			mx-0.125, my-0.25, 0.0,
+			mx+0.125, my-0.25, 0.0,
+			mx-0.125, my+0.25, 0.0,
+			mx+0.125, my+0.25, 0.0		
+		]);
+		const elementPerVertex = 3;
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
+		const aPosition = gl.getAttribLocation(shaderProgram, "aPosition");
+		gl.enableVertexAttribArray(aPosition);
+		gl.vertexAttribPointer(aPosition, elementPerVertex, gl.FLOAT, false, 3*vertexData.BYTES_PER_ELEMENT, 0);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexData.length / (elementPerVertex));
+		gl.deleteShader(vertexShader);
+		gl.deleteShader(fragmentShader);
+		gl.deleteProgram(shaderProgram);  
+
+ 	}
+
+ 	function drawsquare(cord) {
+ 		const vertexShaderSrc = `      
+        attribute vec3 aPosition;  
+        void main () {             
+          gl_Position = vec4(aPosition, 1.0); 
+          gl_PointSize = 5.0;     
+	     }                          
+		`;
+		const fragmentShaderSrc = `      
+	        precision mediump float;          
+	        void main () {               
+	          gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0); 
+	        }                            
+	      `;
+	    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+		gl.shaderSource(vertexShader, vertexShaderSrc);
+		gl.compileShader(vertexShader);
+		const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+		gl.shaderSource(fragmentShader, fragmentShaderSrc);
+		gl.compileShader(fragmentShader);
+		const shaderProgram = gl.createProgram();
+		gl.attachShader(shaderProgram, vertexShader);
+		gl.attachShader(shaderProgram, fragmentShader);
+		gl.linkProgram(shaderProgram);
+		gl.useProgram(shaderProgram);
+		let mx = cord[0];
+		let my = cord[1];
+		console.log("Coordinate x: " + mx,  "Coordinate y: " + my);
+		const vertexData = new Float32Array([
+			mx-0.125, my-0.125, 0.0,
+			mx+0.125, my-0.125, 0.0,
+			mx-0.125, my+0.125, 0.0,
+			mx+0.125, my+0.125, 0.0		
+		]);  
+		const elementPerVertex = 3;
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
+		const aPosition = gl.getAttribLocation(shaderProgram, "aPosition");
+		gl.enableVertexAttribArray(aPosition);
+		gl.vertexAttribPointer(aPosition, elementPerVertex, gl.FLOAT, false, 3*vertexData.BYTES_PER_ELEMENT, 0);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexData.length / (elementPerVertex));
+		gl.deleteShader(vertexShader);
+		gl.deleteShader(fragmentShader);
+		gl.deleteProgram(shaderProgram);  
+ 	}
+
+	window.onload = () =>
+	{
+
+		canvas.addEventListener("click", (event) =>
+		{
+			let rect = canvas.getBoundingClientRect(); 
+			let mouseX = event.clientX - rect.left;
+			let mouseY = event.clientY - rect.top;
+			let cord = mouseToClipCoord(mouseX, mouseY);
+			console.log("click read");
+			if(systemMode === 0) {
+				if(shapeMode === "r") {
+					//Draw rectangle 
+					console.log("Key R read");
+					drawrectangle(cord);
+
+
+				}	
+				else if (shapeMode === "s") {
+					// Draw square
+					console.log("Key S read")
+					drawsquare(cord);
+				}
+			} // end of systeMode = 0
+
+		}); //end of renderer event
+
+
+		window.addEventListener("keydown", function(event)
+		{
+			switch(event.key) {
+				case "ArrowDown":
+					break;
+				case "ArrowUp":
+					break;
+				case "ArrowLeft":
+					if(systemMode === 1) {
+						//Move selected primitve left
+					}
+					else if(systemMode === 2) {
+						//Rotate the scene anticlokwise
+					}
+					break;
+				case "ArrowRight":
+					if(systemMode === 1) {
+						//Move selected primitve right
+					}
+					else if(systemMode === 2) {
+						//Rotate the scene clokwise  
+					}
+					break;
+				case "r":
+					shapeMode = "r";
+					break;
+				case "s":
+					shapeMode = "s";
+					break;
+				case "m":
+				systemMode = (systemMode + 1) % 3;
+				break;
+			}
+		}, 
+			true
+		);
+
+
+	}; // end of window onload
+
+</script>
+</html>
